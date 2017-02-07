@@ -1,0 +1,27 @@
+{
+  "name": "doctoron",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "mukul jain",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "*",
+    "body-parser": "*",
+    "express": "*",
+    "jwt-simple": "*",
+    "mongoose": "*",
+    "morgan": "*",
+    "nodemailer": "*",
+    "passport": "*",
+    "passport-facebook": "^1.0.3",
+    "passport-google": "^0.3.0",
+    "passport-jwt": "*",
+    "passport-local": "^1.0.0",
+    "passport-twitter": "^1.0.2",
+    "redis": "^2.6.5"
+  }
+}
