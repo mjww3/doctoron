@@ -10,13 +10,13 @@
  */
 angular
   .module('yapp', [
+    'mwl.calendar',
     'ui.router',
     'ngAnimate'
   ])
   .config(function($stateProvider, $urlRouterProvider) {
 
     $urlRouterProvider.when('/dashboard', '/dashboard/overview');
-    $urlRouterProvider.otherwise('/login');
 
     $stateProvider
       .state('base', {
@@ -41,10 +41,28 @@ angular
             parent: 'dashboard',
             templateUrl: 'views/dashboard/overview.html'
           })
+          .state('calendar',{
+            url:'/calendar',
+            parent:'dashboard',
+            templateUrl:'views/dashboard/calendar.html',
+            controller:'CalendarCtrl'
+          })
           .state('reports', {
             url: '/reports',
             parent: 'dashboard',
             templateUrl: 'views/dashboard/reports.html'
+          })
+          .state('chat',{
+            url:'/chat',
+            parent:'dashboard',
+            templateUrl:'views/dashboard/chat.html',
+            controller:'ChatCtrl'
+          })
+            .state('videochat',{
+            url:'/videochat',
+            parent:'dashboard',
+            templateUrl:'views/dashboard/videochat.html',
+            controller:'VideoChatCtrl'
           });
 
   });

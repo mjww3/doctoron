@@ -5,9 +5,13 @@ var passport = require("passport");
 var jwt = require("jwt-simple");
 var bodyParser = require('body-parser');
 var bcrypt = require("bcryptjs");
+var moment = require('moment');
+var config = require('./config/database');
 var JwtStrategy = require('passport-jwt').Strategy;
 mongoose.connect('mongodb://mukuljain:mukuljain@ds145669.mlab.com:45669/doctoron');
 var app = express();
+var server = require('http').Server(app);
+var io = require('socket.io')(server);
 
 ///app use 
 app.use(bodyParser.urlencoded({extended:true}));
@@ -26,13 +30,16 @@ var Schema = mongoose.Schema;
 ///this is the appointment schema
 var appointmentSchema = new Schema({
   patient_name:String,
-  age:Number
+  age:Number,
+  date_created:Date,
+  appointment_timestamp:Date
 });
 
 ///doctor schema
 
 var DoctorSchema = new Schema({
   name:String,
+  fees:Number,
   appointment:[appointmentSchema]
 });
 
@@ -47,10 +54,26 @@ var UserSchema = new Schema({
     type:String,
     required:true
   },
-  appointments:{
-    doctor_name:String,
-    place:String
-  }
+  appointments:[appointmentSchema]
+});
+
+///this will be the conversation schema
+
+var ConversationSchema = new Schema({
+  from_id:Number,
+  to_id:Date,
+  timestamp:Date,
+  con_id:Number
+});
+
+///this will be our conversation_reply schema
+
+var ConversationreplySchema = new Schema({
+  reply:String,
+  from_id:Number,
+  to_id:Number,
+  timestamp:Date,
+  con_id:Number
 });
 
 ///this will be for our authentication
@@ -70,6 +93,16 @@ UserSchema.pre('save',function(next){
         next();
       });
     });
+  }else{
+    return next();
+  }
+});
+
+appointmentSchema.pre('save',function(next){
+  var appointment = this;
+  this.date_created = Date.now();
+  if(err){
+    return next(err)
   }else{
     return next();
   }
@@ -114,9 +147,45 @@ var User = mongoose.model('User',UserSchema);
 var Doctor = mongoose.model('Doctor',DoctorSchema);
 var Appointment = mongoose.model('Appointment',appointmentSchema);
 
+var Conversation = mongoose.model('Conversation',ConversationSchema);
+var ConversationReply = mongoose.model('ConversationReply',ConversationreplySchema);
+
 router.get("/cool",function(req,res){
   res.json({message:"this is cool django api is working"});
 });
+
+
+var users = [];
+///Socket io chat code
+
+io.on('connection',function(socket){
+  socket.on('username',function(userName){
+    users.push({
+      id:socket.id,
+      userName:userName
+    });
+    var len = users.length;
+    len--;
+    io.emit('userList',users,users[len].id);
+  });
+
+  socket.on('getMsg',function(data){
+    socket.broadcast.to(data.toid).emit('sendMsg',{
+      msg:data.msg,
+      name:data.name
+    });
+
+  });
+
+  socket.on('disconnect',function(){
+    for(var i=0;i<users.length;i++){
+      if(users[i].id===socket.id){
+      users.splice(i,1);                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
+    }
+  }
+  io.emit('exit',users);
+  });
+})
 
 ////this will be our signup route
 
@@ -147,7 +216,6 @@ router.route('/authenticate')
     name: req.body.name
   }, function(err, user) {
     if (err) throw err;
- 
     if (!user) {
       res.send({success: false, msg: 'Authentication failed. User not found.'});
     } else {
@@ -157,7 +225,7 @@ router.route('/authenticate')
           // if user is found and password is right create a token
           var token = jwt.encode(user, config.secret);
           // return the information including token as JSON
-          res.json({success: true, token: 'JWT ' + token});
+          res.json({success: true, token: 'JWT ' + token,user:user});
         } else {
           res.send({success: false, msg: 'Authentication failed. Wrong password.'});
         }
@@ -194,9 +262,15 @@ router.route('/users/all')
   });
 });
 
-router.route
+///get the id of the user
 
-///add an appointment
+router.route('/myid')
+.get(function(req,res){
+
+
+});
+
+///add an appointment to the doctor
 router.route('/doctors/:doctor_id/add')
 .post(function(req,res){
   Doctor.findById(req.params.doctor_id,function(err,doc){
@@ -206,7 +280,9 @@ router.route('/doctors/:doctor_id/add')
     else{
       doc.appointment.push({
         patient_name:req.body.patient_name,
-        age:req.body.age
+        age:req.body.age,
+        date_created:Date.now(),
+        appointment_timestamp:req.body.appointment_date
       });
       doc.save(function(err){
         if(err){
@@ -214,9 +290,37 @@ router.route('/doctors/:doctor_id/add')
         }
       });
       res.json({message:"appointment created"});
+      }
+  });
+});
+///add an appointment to the user
+router.route('/doctors/:username/addapp')
+.post(function(req,res){
+  User.findOne({name:req.params.username},function(err,user){
+    if(err){
+      res.send(err);
+    }
+    else if(!user){
+      res.json({message:"not ok"});
+    }
+    else{
+      user.appointments.push({
+        patient_name:req.body.patient_name,
+        age:req.body.age,
+        date_created:Date.now(),
+        appointment_timestamp:req.body.appointment_date
+      });
+      user.save(function(err){
+        if(err){
+          res.send(err);
+        }
+        else
+        {
+          res.json({message:"success"});
+        }
+      });
     }
   });
-
 });
 
 ///get all the doctors
@@ -243,7 +347,6 @@ router.route('/doctors/:doctor_id')
 });
 
 ///get appointments for a particular doctor
-///get a particluar doctor
 router.route('/doctors/:doctor_id/appointment')
 .get(function(req,res){
   Doctor.findById(req.params.doctor_id,function(err,doctr){
@@ -255,9 +358,17 @@ router.route('/doctors/:doctor_id/appointment')
   });
 });
 
+///get a particular appointment
+router.route('/doctors/:doctor_id/appointment/:appointment_id')
+.get(function(req,res){
+  Doctor.findById(req.params.doctor_id,function(err,doctr){
+    if(err){
+      res.send(err);
+    }
+  });
+});
+
+///changes in the appointment 
 app.use("/",router);
-
 console.log("magic is happening on port "+port);
-
-
 ///connection to the database ends

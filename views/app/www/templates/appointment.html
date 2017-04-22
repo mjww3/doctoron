@@ -1,0 +1,9 @@
+<ion-view view-title="Appointment">
+  <ion-content>
+    <ion-list ng-repeat="appointment in appointments">
+    {{appointment.patient_name}}
+    {{appointment.date_created}}
+    </ion-list>
+    <button type="button" ng-click="newAppointment()">submit</button>
+  </ion-content>
+</ion-view>

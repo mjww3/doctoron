@@ -1,0 +1,24 @@
+<ion-view view-title="Doctors">
+<ion-nav-buttons side="secondary">
+<ion-nav-bar align-title="center" class="bar-assertive">
+  <button class="buttons button-icon ion-android-search" ng-click="showFilterBar()"></button>
+  <ion-nav-bar>
+ </ion-nav-buttons>
+  <ion-content>
+  <ion-refresher pulling-text="Update Date" on-refresh="doRefresh()"></ion-refresher>
+  <ion-list>
+    <ion-item  ng-repeat="doctor in doctors" ui-sref="app.doctorname({doctorname:doctor._id})">
+    <i class="icon ion-email"></i>
+      {{doctor.name}}
+      <div class="doctorname">
+      </div>
+    </ion-item>
+  </ion-list>
+  </ion-content>
+</ion-view>
+<style>
+.doctorname
+{
+	color: red;
+}
+</style>

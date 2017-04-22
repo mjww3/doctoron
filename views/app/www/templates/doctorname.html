@@ -1,0 +1,21 @@
+<ion-view view-title="Browse">
+  <ion-content>
+  <div class="card">
+  	<div class="item item-avatar">
+  		<h2>{{doctor.name}}</h2>
+  	</div>
+  	<div class="item item-body">
+  		{{doctor._id}}
+  	</div>
+  </div>
+    <button class="button button-full button-balanced" ng-click="bookAppointment()" ion-datetime-picker ng-model="datetimeValue">
+      Book Appointment
+    </button>
+    <button class="button button-full button-balanced" ng-click="startChat()" > 
+      Chat
+    </button>
+    <div ng-show="showTime">{{datetimeValue| date: "yyyy-MM-dd H:mm"}}
+    <button class="button button-block button-balanced" ng-click="confirm({{appointment}})">Confirm</button>
+    	</div
+  </ion-content>
+</ion-view>

@@ -1,0 +1,10 @@
+<ion-view view-title="Browse">
+  <ion-content>
+    <ion-list>
+      <div class="item" ion-datetime-picker ng-model="datetimeValue">
+        {{datetimeValue| date: "yyyy-MM-dd H:mm:ss"}}
+      </div>
+    </ion-list>
+    <button type="button" ng-click="newAppointment()">submit</button>
+  </ion-content>
+</ion-view>
